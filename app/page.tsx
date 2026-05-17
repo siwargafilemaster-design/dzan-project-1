@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabase"
 import Marquee from "@/components/Marquee"
 import SectionLabel from "@/components/SectionLabel"
+import ProductCard from "@/components/ProductCard"
+import Link from "next/link"
 
 async function getHeroVideo() {
   const { data, error } = await supabase
@@ -16,8 +18,26 @@ async function getHeroVideo() {
   return data?.video_url
 }
 
+async function getFeaturedProducts() {
+  const { data, error } = await supabase
+    .from("products")
+    .select("slug, name_en, category, image_url, is_featured")
+    .eq("is_featured", true)
+    .eq("is_available", true)
+    .limit(2)
+
+  if (error) {
+    console.error("Error fetching products:", error)
+    return []
+  }
+
+  return data || []
+}
+
+
 const Home = async () => {
   const videoUrl = await getHeroVideo()
+  const featuredProducts = await getFeaturedProducts()
 
   return (
     <main>
@@ -115,6 +135,77 @@ const Home = async () => {
           Rumah kurasi produk kerajinan tangan dari jantung Karanganyar —
           membawa warisan budaya Lawu ke panggung dunia.
         </p>
+      </section>
+
+      {/* FEATURED PRODUCTS */}
+      <section className="bg-dzan-dark px-6 py-20">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="font-cormorant font-light text-3xl text-dzan-cream leading-tight">
+            Featured
+            <br />
+            Crafts
+          </h2>
+          <Link
+            href="/catalog"
+            className="text-xs tracking-[2px] uppercase text-dzan-amber border-b border-dzan-amber pb-0.5"
+          >
+            View All
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          {featuredProducts.map((p) => (
+            <ProductCard
+              key={p.slug}
+              slug={p.slug}
+              nameEn={p.name_en}
+              category={p.category}
+              imageUrl={p.image_url}
+              isFeatured={p.is_featured}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* STATS */}
+      <section className="bg-dzan-earth px-6 py-16 text-center">
+        <SectionLabel className="mb-8">Our Heritage</SectionLabel>
+
+        <div className="grid grid-cols-2 gap-8 max-w-sm mx-auto">
+          {[
+            { number: "3+", label: "Artisans" },
+            { number: "12+", label: "Products" },
+            { number: "3", label: "Categories" },
+            { number: "🇩🇪", label: "Export Market" },
+          ].map((stat, i) => (
+            <div key={i} className="text-center">
+              <span className="font-cormorant font-light text-5xl text-dzan-amber block leading-none">
+                {stat.number}
+              </span>
+              <span className="text-[10px] tracking-[2px] text-dzan-stone uppercase mt-2 block">
+                {stat.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-dzan-cream px-6 py-20 text-center">
+        <h2 className="font-cormorant font-light text-3xl text-dzan-earth leading-tight mb-2">
+          Crafted with soul,
+          <br />
+          <em className="italic text-dzan-brown">made for the world.</em>
+        </h2>
+        <p className="text-xs tracking-[1px] text-dzan-stone mb-8">
+          Karanganyar · Central Java · Indonesia
+        </p>
+        <Link
+          href="/catalog"
+          className="inline-block bg-dzan-earth text-dzan-cream text-xs tracking-[3px] font-medium uppercase px-9 py-4 rounded-sm"
+        >
+          Explore Full Catalog
+        </Link>
       </section>
       
     </main>
