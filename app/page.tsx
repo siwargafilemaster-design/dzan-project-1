@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import Marquee from "@/components/Marquee"
+import SectionLabel from "@/components/SectionLabel"
 
 async function getHeroVideo() {
   const { data, error } = await supabase
@@ -66,6 +67,55 @@ const Home = async () => {
       </section>
 
       <Marquee />
+      
+      {/* ABOUT */}
+      <section id="about" className="bg-dzan-cream px-6 py-20 text-center">
+        <SectionLabel className="mb-6">Our Identity</SectionLabel>
+
+        {/* DZAN Letters */}
+        <div className="flex justify-center mb-8">
+          {[
+            { letter: "D", word: "Distinctive" },
+            { letter: "Z", word: "Zenith" },
+            { letter: "A", word: "Authentic" },
+            { letter: "N", word: "Noble" },
+          ].map((item, i) => (
+            <div
+              key={i}
+              className={`text-center px-4 ${
+                i < 3 ? "border-r border-dzan-brown/15" : ""
+              }`}
+            >
+              <span className="font-cormorant text-3xl font-semibold text-dzan-brown block leading-none">
+                {item.letter}
+              </span>
+              <span className="text-[8px] tracking-[1.5px] text-dzan-stone uppercase mt-1 block">
+                {item.word}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Description EN */}
+        <p className="text-sm leading-relaxed text-dzan-earth max-w-md mx-auto mb-4 font-light">
+          A curated house of handcrafted products from the heart of
+          Karanganyar, Central Java. Bridging noble artisans of Lawu
+          Mountain with the global market.
+        </p>
+
+        {/* Divider */}
+        <div className="flex items-center justify-center gap-3 my-8">
+          <div className="h-px w-12 bg-dzan-amber" />
+          <span className="text-dzan-amber text-sm">✦</span>
+          <div className="h-px w-12 bg-dzan-amber" />
+        </div>
+
+        {/* Description ID */}
+        <p className="text-xs leading-relaxed text-dzan-stone max-w-md mx-auto">
+          Rumah kurasi produk kerajinan tangan dari jantung Karanganyar —
+          membawa warisan budaya Lawu ke panggung dunia.
+        </p>
+      </section>
       
     </main>
   )
