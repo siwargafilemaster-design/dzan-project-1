@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 
 const AdminProductsPage = async () => {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 

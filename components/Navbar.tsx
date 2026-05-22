@@ -21,7 +21,7 @@ const Navbar = () => {
           alt="DZAN Lawu Heritage"
           width={80}
           height={40}
-          className="object-contain"
+          className="object-contain h-auto w-auto"
           priority
         />
       </Link>

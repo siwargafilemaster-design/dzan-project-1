@@ -37,7 +37,7 @@ const getActions = (role: string, scope: string | null) => {
 }
 
 const AdminDashboard = async () => {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
