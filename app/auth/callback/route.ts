@@ -2,16 +2,23 @@ import { createClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
 
+  // Ambil URL public dari header
+  const forwardedHost = request.headers.get("x-forwarded-host")
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https"
+  const host = forwardedHost || request.headers.get("host")
+  const origin = `${forwardedProto}://${host}`
+
+  // Buat client SEKALI
+  const supabase = await createClient()
+
   if (code) {
-    const supabase = await createClient()
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Check if profile is complete (has full_name)
-  const supabase = await createClient()
+  // Cek user & profile
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {

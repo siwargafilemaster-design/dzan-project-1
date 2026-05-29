@@ -31,26 +31,47 @@ const OnboardingPage = () => {
   }, [supabase])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  e.preventDefault()
+  setLoading(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        title,
-        full_name: fullName,
-        country,
-      })
-      .eq("id", user.id)
-
-    if (!error) {
-      router.push("/account")
-      router.refresh()
-    }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    console.error("No user found!")
     setLoading(false)
+    return
+  }
+
+  console.log("Updating profile for user:", user.id)
+  console.log("Data to update:", { title, full_name: fullName, country })
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      title,
+      full_name: fullName,
+      country,
+    })
+    .eq("id", user.id)
+    .select()  // ← TAMBAH .select() — biar tahu data yang ter-update
+
+  console.log("Update result:", { data, error })
+
+  if (error) {
+    console.error("Update error:", error)
+    alert(`Error: ${error.message}`)
+    setLoading(false)
+    return
+  }
+
+  if (!data || data.length === 0) {
+    console.error("No rows updated!")
+    alert("Profile update failed - no rows affected")
+    setLoading(false)
+    return
+  }
+
+  router.push("/account")
+  router.refresh()
   }
 
   return (

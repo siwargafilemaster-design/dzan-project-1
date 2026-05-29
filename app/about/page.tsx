@@ -3,7 +3,7 @@ import Link from "next/link"
 
 const AboutPage = () => {
   return (
-    <main className="bg-dzan-cream min-h-screen pt-20 pb-12">
+    <main className="bg-dzan-cream min-h-screen pt-28 pb-12">
       {/* Header */}
       <section className="px-6 py-12 text-center">
         <SectionLabel className="mb-4">Our Story</SectionLabel>

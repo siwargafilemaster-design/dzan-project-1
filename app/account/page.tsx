@@ -54,7 +54,7 @@ const AccountPage = async () => {
     .limit(5)
 
   return (
-    <main className="bg-dzan-cream min-h-screen pt-16 pb-20">
+    <main className="bg-dzan-cream min-h-screen pt-28 pb-20">
       {/* Greeting Hero */}
       <section className="bg-gradient-to-br from-dzan-earth to-dzan-brown px-6 py-10">
         <p className="text-[10px] tracking-[3px] uppercase text-dzan-amber mb-2">
@@ -153,7 +153,7 @@ const AccountPage = async () => {
 
       {/* Logout */}
       <section className="px-6">
-        <form action="/auth/signout" method="post">
+        <form action="/signout" method="post">
           <button
             type="submit"
             className="w-full text-xs tracking-[2px] uppercase text-dzan-stone border border-dzan-stone/30 rounded-sm py-3"

@@ -21,7 +21,7 @@ const CatalogPage = async () => {
   const products = await getAllProducts()
 
   return (
-    <main className="bg-dzan-cream min-h-screen pt-20 pb-12">
+    <main className="bg-dzan-cream min-h-screen pt-28 pb-12">
       {/* Header */}
       <section className="px-6 py-12 text-center">
         <SectionLabel className="mb-4">Full Collection</SectionLabel>
