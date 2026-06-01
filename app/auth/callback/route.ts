@@ -18,20 +18,31 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Cek user & profile
+  // Cek user
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .single()
-
-    if (!profile?.full_name) {
-      return NextResponse.redirect(`${origin}/onboarding`)
-    }
+  // GUARD: Kalau user tidak ada, kembali ke login
+  if (!user) {
+    return NextResponse.redirect(`${origin}/login`)
   }
 
+  // Ambil profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, role")
+    .eq("id", user.id)
+    .single()
+
+  // Step 1: Cek profile completion (user baru)
+  if (!profile?.full_name) {
+    return NextResponse.redirect(`${origin}/onboarding`)
+  }
+
+  // Step 2: Cek role — admin & super_admin ke /admin
+  if (profile.role === "super_admin" || profile.role === "admin") {
+    return NextResponse.redirect(`${origin}/admin`)
+  }
+
+  // Default: ke /account (untuk buyer)
   return NextResponse.redirect(`${origin}/account`)
 }

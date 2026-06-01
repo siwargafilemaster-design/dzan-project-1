@@ -19,7 +19,7 @@ const Navbar = () => {
       setUser(user)
 
       if (user) {
-        const { data } = await supabase
+        const { data } = await supabase 
           .from("profiles")
           .select("title, full_name, avatar_url")
           .eq("id", user.id)
@@ -27,7 +27,6 @@ const Navbar = () => {
         setProfile(data)
       }
     }
-
     getUserAndProfile()
 
     const {
