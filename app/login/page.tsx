@@ -38,10 +38,37 @@ const LoginPage = () => {
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else {
-      router.push("/account")
-      router.refresh()
+      return
     }
+
+    // Cek role untuk redirect yang tepat (role-based routing)
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, role")
+        .eq("id", user.id)
+        .single()
+      
+      // Step 1: Cek profile completion (user baru)
+      if (!profile?.full_name) {
+        router.push("/onboarding")
+      }
+      // Step 2: Admin & super_admin ke /admin
+      else if (profile.role === "super_admin" || profile.role === "admin") {
+        router.push("/admin")
+      }
+      // Default: ke /account (buyer)
+      else {
+        router.push("/account")
+      }
+    } else {
+      // Fallback (kalau user fetch gagal)
+      router.push("/account")
+    }
+    
+    router.refresh()
   }
 
   return (

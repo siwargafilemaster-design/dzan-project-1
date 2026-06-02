@@ -21,7 +21,7 @@ const Navbar = () => {
       if (user) {
         const { data } = await supabase 
           .from("profiles")
-          .select("title, full_name, avatar_url")
+          .select("title, full_name, avatar_url, role")  // ← TAMBAH "role"
           .eq("id", user.id)
           .single()
         setProfile(data)
@@ -37,7 +37,7 @@ const Navbar = () => {
       if (session?.user) {
         const { data } = await supabase
           .from("profiles")
-          .select("title, full_name, avatar_url")
+          .select("title, full_name, avatar_url, role")  // ← TAMBAH "role"
           .eq("id", session.user.id)
           .single()
         setProfile(data)
@@ -80,7 +80,11 @@ const Navbar = () => {
         {/* Conditional: Login Button atau User Avatar */}
         {user && profile ? (
           <Link
-            href="/account"
+            href={
+              profile.role === "super_admin" || profile.role === "admin"
+                ? "/admin"
+                : "/account"
+            }  
             className="w-20 h-20 rounded-full bg-dzan-amber text-dzan-earth font-bold text-lg flex items-center justify-center hover:bg-dzan-brown hover:text-dzan-cream transition-colors"
           >
             {profile.full_name
