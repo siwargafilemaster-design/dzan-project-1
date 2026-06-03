@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase-server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import ActivityFeedSection from "@/components/ActivityFeedSection"
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
@@ -64,12 +65,36 @@ const AdminDashboard = async () => {
     .select("*", { count: "exact", head: true })
     .eq("status", "new")
 
-  // Activity Feed (20 terbaru)
+  // === ACTIVITY FEED dengan COMMENT COUNT ===
+  
+  // Step 1: Ambil 20 activities terbaru
   const { data: activities } = await supabase
     .from("activity_log")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(20)
+
+  // Step 2: Ambil semua comments yang terkait
+  const activityIds = activities?.map((a) => a.id) || []
+  
+  const { data: commentRows } = activityIds.length > 0
+    ? await supabase
+        .from("activity_comments")
+        .select("activity_id")
+        .in("activity_id", activityIds)
+    : { data: [] }
+
+  // Step 3: Hitung jumlah comment per activity
+  const countMap = new Map<string, number>()
+  commentRows?.forEach((c) => {
+    countMap.set(c.activity_id, (countMap.get(c.activity_id) || 0) + 1)
+  })
+
+  // Step 4: Gabungkan ke activities
+  const activitiesWithCount = activities?.map((a) => ({
+    ...a,
+    comment_count: countMap.get(a.id) || 0,
+  })) || []
 
   return (
     <main className="bg-dzan-cream min-h-screen pt-28 pb-20">
@@ -145,47 +170,8 @@ const AdminDashboard = async () => {
         </div>
       </section>
 
-      {/* Activity Feed */}
-      <section className="px-6 py-4">
-        <h2 className="font-cormorant text-lg text-dzan-earth mb-4">
-          Recent Activity
-        </h2>
-
-        {activities && activities.length > 0 ? (
-          <div className="space-y-3">
-            {activities.map((act) => (
-              <div
-                key={act.id}
-                className="bg-white rounded-sm p-4 border-l-2 border-dzan-amber"
-              >
-                <p className="text-xs text-dzan-stone">
-                  {new Date(act.created_at).toLocaleString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                <p className="text-sm text-dzan-earth mt-1">
-                  <span className="font-semibold">{act.actor_name}</span>{" "}
-                  {act.description}
-                </p>
-                {act.entity_name && (
-                  <p className="text-xs text-dzan-stone mt-1 italic">
-                    {act.entity_name}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-sm p-6 text-center border border-dzan-stone/20">
-            <p className="text-xs text-dzan-stone italic">
-              Belum ada aktivitas — mulai bekerja untuk lihat history di sini
-            </p>
-          </div>
-        )}
-      </section>
+      {/* Activity Feed dengan Modal Comments */}
+      <ActivityFeedSection activities={activitiesWithCount} />
 
       {/* View as Buyer */}
       <section className="px-6 py-8">
