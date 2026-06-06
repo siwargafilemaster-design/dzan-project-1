@@ -2,52 +2,17 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase-browser"
+import { useState } from "react"
+import { useAuth } from "@/components/AuthProvider"
 
 const Navbar = () => {
-  const supabase = createClient()
+  // ✨ TIDAK PERLU useState user/profile/loading lagi
+  // ✨ TIDAK PERLU useEffect fetch
+  // ✨ TIDAK PERLU createClient
+  // Cuma 1 baris ini untuk akses data:
+  const { user, profile } = useAuth()
+  
   const [lang, setLang] = useState<"ID" | "EN">("EN")
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-
-  useEffect(() => {
-    const getUserAndProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-
-      if (user) {
-        const { data } = await supabase 
-          .from("profiles")
-          .select("title, full_name, avatar_url, role")  // ← TAMBAH "role"
-          .eq("id", user.id)
-          .single()
-        setProfile(data)
-      }
-    }
-    getUserAndProfile()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("title, full_name, avatar_url, role")  // ← TAMBAH "role"
-          .eq("id", session.user.id)
-          .single()
-        setProfile(data)
-      } else {
-        setProfile(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [supabase])
 
   const toggleLang = () => {
     setLang(lang === "ID" ? "EN" : "ID")
@@ -77,14 +42,15 @@ const Navbar = () => {
           {lang === "ID" ? "🇮🇩 ID" : "🇬🇧 EN"}
         </button>
 
-        {/* Conditional: Login Button atau User Avatar */}
+        {/* Conditional: Avatar atau Login Button */}
+        {/* TIDAK PERLU loading state lagi karena data sudah pasti tersedia */}
         {user && profile ? (
           <Link
             href={
               profile.role === "super_admin" || profile.role === "admin"
                 ? "/admin"
                 : "/account"
-            }  
+            }
             className="w-20 h-20 rounded-full bg-dzan-amber text-dzan-earth font-bold text-lg flex items-center justify-center hover:bg-dzan-brown hover:text-dzan-cream transition-colors"
           >
             {profile.full_name
@@ -96,8 +62,6 @@ const Navbar = () => {
                   .toUpperCase()
               : "?"}
           </Link>
-        ) : user ? (
-          <div className="w-20 h-20 rounded-full bg-dzan-amber/30 animate-pulse" />
         ) : (
           <Link
             href="/login"

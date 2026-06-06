@@ -182,6 +182,18 @@ const AdminDashboard = async () => {
           👁️ View as Buyer
         </Link>
       </section>
+
+      {/* Logout */}
+      <section className="px-6">
+        <form action="/signout" method="post">
+          <button
+            type="submit"
+            className="w-full text-xs tracking-[2px] uppercase text-dzan-stone border border-dzan-stone/30 rounded-sm py-3"
+          >
+            Sign Out
+          </button>
+        </form>
+      </section>
     </main>
   )
 }

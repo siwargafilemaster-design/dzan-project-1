@@ -25,6 +25,9 @@ const AccountPage = async () => {
 
   if (!profile?.full_name) redirect("/onboarding")
 
+  // Cek apakah user ini admin (untuk banner mode preview)
+  const isAdmin = profile.role === "admin" || profile.role === "super_admin"
+
   // Update last visit
   await supabase
     .from("profiles")
@@ -55,6 +58,31 @@ const AccountPage = async () => {
 
   return (
     <main className="bg-dzan-cream min-h-screen pt-28 pb-20">
+      {/* Mode Preview Banner — hanya untuk admin */}
+      {isAdmin && (
+        <div className="fixed top-32 left-0 right-0 z-40 bg-dzan-amber text-dzan-earth px-4 py-3 shadow-md">
+          <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
+            <div className="flex-1">
+              <p className="text-[9px] tracking-[2px] uppercase font-semibold">
+                👁️ Mode Preview
+              </p>
+              <p className="text-xs mt-0.5">
+                Anda melihat sebagai buyer
+              </p>
+            </div>
+            <Link
+              href="/admin"
+              className="text-[10px] tracking-[2px] uppercase font-semibold bg-dzan-earth text-dzan-cream px-3 py-2 rounded-sm whitespace-nowrap"
+            >
+              ← Admin
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Spacer untuk banner — hanya untuk admin */}
+      {isAdmin && <div className="h-16" />}
+
       {/* Greeting Hero */}
       <section className="bg-gradient-to-br from-dzan-earth to-dzan-brown px-6 py-10">
         <p className="text-[10px] tracking-[3px] uppercase text-dzan-amber mb-2">

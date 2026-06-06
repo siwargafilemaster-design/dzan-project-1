@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase-browser"
 
 interface Comment {
@@ -24,6 +25,7 @@ const ActivityDiscussModal = ({
   onClose,
 }: ActivityDiscussModalProps) => {
   const supabase = createClient()
+  const router = useRouter ()
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
   const [loading, setLoading] = useState(false)
@@ -95,6 +97,7 @@ const ActivityDiscussModal = ({
     setComments([...comments, inserted])
     setNewComment("")
     setLoading(false)
+    router.refresh()
   }
 
   if (!activityId) return null
