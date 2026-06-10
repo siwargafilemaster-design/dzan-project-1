@@ -24,9 +24,9 @@ const AdminProductsPage = async () => {
     .order("created_at", { ascending: false })
 
   return (
-    <main className="bg-dzan-cream min-h-screen pt-16 pb-20 px-6">
+    <main className="bg-dzan-cream min-h-screen pt-28 pb-20 px-6">
       <div className="py-6 flex items-center justify-between">
-        <Link href="/admin" className="text-xs text-dzan-stone">
+        <Link href="/admin" className="inline-flex items-center gap-1.5 bg-dzan-sage/90 hover:bg-dzan-sage text-white text-[10px] tracking-[2px] uppercase font-medium px-4 py-2 rounded-full transition-colors">
           ← Dashboard
         </Link>
       </div>
@@ -58,6 +58,7 @@ const AdminProductsPage = async () => {
                   src={p.image_url}
                   alt={p.name_en}
                   fill
+                  sizes="64px"
                   className="object-cover"
                 />
               )}

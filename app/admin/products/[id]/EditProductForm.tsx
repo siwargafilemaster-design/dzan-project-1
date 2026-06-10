@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase-browser"
 
-// Helper untuk auto-generate slug dari nama
+// Helper untuk auto-generate slug
 const generateSlug = (text: string): string => {
   return text
     .toLowerCase()
@@ -21,44 +21,65 @@ interface Artisan {
   name: string
 }
 
-interface NewProductFormProps {
+interface Product {
+  id: number
+  slug: string
+  name_en: string
+  name_id: string
+  desc_en: string
+  desc_id: string
+  category: string
+  artisan_id: number
+  material: string
+  moq: number
+  price_usd: number
+  image_url: string
+  is_available: boolean
+  is_featured: boolean
+}
+
+interface EditProductFormProps {
+  product: Product
   artisans: Artisan[]
 }
 
-const NewProductForm = ({ artisans }: NewProductFormProps) => {
+const EditProductForm = ({ product, artisans }: EditProductFormProps) => {
   const router = useRouter()
   const supabase = createClient()
   
-  // State untuk semua field form
-  const [nameEn, setNameEn] = useState("")
-  const [nameId, setNameId] = useState("")
-  const [slug, setSlug] = useState("")
-  const [descEn, setDescEn] = useState("")
-  const [descId, setDescId] = useState("")
-  const [category, setCategory] = useState("")
-  const [artisanId, setArtisanId] = useState("")
-  const [material, setMaterial] = useState("")
-  const [moq, setMoq] = useState("")
-  const [priceUsd, setPriceUsd] = useState("")
-  const [isAvailable, setIsAvailable] = useState(true)
-  const [isFeatured, setIsFeatured] = useState(false)
+  // Pre-fill state dari existing product
+  const [nameEn, setNameEn] = useState(product.name_en)
+  const [nameId, setNameId] = useState(product.name_id)
+  const [slug, setSlug] = useState(product.slug)
+  const [descEn, setDescEn] = useState(product.desc_en)
+  const [descId, setDescId] = useState(product.desc_id)
+  const [category, setCategory] = useState(product.category)
+  const [artisanId, setArtisanId] = useState(String(product.artisan_id))
+  const [material, setMaterial] = useState(product.material)
+  const [moq, setMoq] = useState(String(product.moq))
+  const [priceUsd, setPriceUsd] = useState(String(product.price_usd))
+  const [isAvailable, setIsAvailable] = useState(product.is_available)
+  const [isFeatured, setIsFeatured] = useState(product.is_featured)
   
-  // State untuk image upload
+  // Image state — optional replace
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const existingImageUrl = product.image_url
   
-  // State untuk UI feedback
+  // UI feedback state
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-  // Auto-generate slug saat name_en berubah
+  // Auto-update slug saat name_en berubah
   useEffect(() => {
     if (nameEn) {
       setSlug(generateSlug(nameEn))
     }
   }, [nameEn])
 
-  // Handler saat user pilih file image
+  // Handler image file change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -75,7 +96,7 @@ const NewProductForm = ({ artisans }: NewProductFormProps) => {
     setImagePreview(previewUrl)
   }
 
-  // Upload image ke Supabase Storage
+  // Upload new image (only if user selected new file)
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return null
     
@@ -98,8 +119,49 @@ const NewProductForm = ({ artisans }: NewProductFormProps) => {
     return publicUrl
   }
 
-  // Auto-log activity setelah insert sukses
-  const logActivity = async (productId: string | number, productName: string) => {
+  // Build activity log description (Hybrid format)
+  const buildUpdateDescription = (newImageUrl: string | null): string => {
+    const changes: string[] = []
+    
+    // Detail untuk field penting
+    if (parseFloat(priceUsd) !== product.price_usd) {
+      changes.push(`Harga $${product.price_usd} → $${priceUsd}`)
+    }
+    
+    if (parseInt(moq) !== product.moq) {
+      changes.push(`MOQ ${product.moq} → ${moq}`)
+    }
+    
+    if (isAvailable !== product.is_available) {
+      changes.push(
+        isAvailable 
+          ? "Tampilkan di katalog" 
+          : "Sembunyikan dari katalog"
+      )
+    }
+    
+    if (isFeatured !== product.is_featured) {
+      changes.push(
+        isFeatured 
+          ? "Jadikan featured" 
+          : "Hapus dari featured"
+      )
+    }
+    
+    if (newImageUrl) {
+      changes.push("Update foto produk")
+    }
+    
+    // Build description
+    if (changes.length === 0) {
+      return `Update produk: ${nameEn}`
+    }
+    
+    return `Update produk: ${nameEn} — ${changes.join(", ")}`
+  }
+
+  // Log activity for update
+  const logUpdateActivity = async (newImageUrl: string | null) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -116,14 +178,43 @@ const NewProductForm = ({ artisans }: NewProductFormProps) => {
         actor_id: user.id,
         actor_name: profile.full_name,
         actor_role: profile.role_scope || profile.role,
-        action: "create",
+        action: "update",
         entity_type: "product",
-        entity_id: String(productId),
-        entity_name: productName,
-        description: `Tambah produk baru: ${productName}`,
+        entity_id: String(product.id),
+        entity_name: nameEn,
+        description: buildUpdateDescription(newImageUrl),
       })
     } catch (err: any) {
-      console.error("logActivity failed:", err?.message || err)
+      console.error("logUpdateActivity failed:", err?.message || err)
+    }
+  }
+
+  // Log activity for delete
+  const logDeleteActivity = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, role, role_scope")
+        .eq("id", user.id)
+        .single()
+      
+      if (!profile) return
+      
+      await supabase.from("activity_log").insert({
+        actor_id: user.id,
+        actor_name: profile.full_name,
+        actor_role: profile.role_scope || profile.role,
+        action: "delete",
+        entity_type: "product",
+        entity_id: String(product.id),
+        entity_name: product.name_en,
+        description: `Hapus produk: ${product.name_en}`,
+      })
+    } catch (err: any) {
+      console.error("logDeleteActivity failed:", err?.message || err)
     }
   }
 
@@ -132,21 +223,20 @@ const handleSubmit = async (e: React.FormEvent) => {
   setLoading(true)
   setError("")
   
-  if (!imageFile) {
-    setError("Foto produk wajib diisi")
-    setLoading(false)
-    return
-  }
-  
   try {
-    const imageUrl = await uploadImage()
+    let newImageUrl: string | null = null
     
-    if (!imageUrl) {
-      setLoading(false)
-      return
+    if (imageFile) {
+      newImageUrl = await uploadImage()
+      
+      if (!newImageUrl) {
+        setLoading(false)
+        return
+      }
+    } else {
     }
     
-    const insertPayload = {
+    const updatePayload: any = {
       slug,
       name_en: nameEn,
       name_id: nameId,
@@ -157,24 +247,26 @@ const handleSubmit = async (e: React.FormEvent) => {
       material,
       moq: parseInt(moq),
       price_usd: parseFloat(priceUsd),
-      image_url: imageUrl,
       is_available: isAvailable,
       is_featured: isFeatured,
     }
     
-    const { data: newProduct, error: insertError } = await supabase
+    if (newImageUrl) {
+      updatePayload.image_url = newImageUrl
+    }
+    
+    const { error: updateError } = await supabase
       .from("products")
-      .insert(insertPayload)
-      .select()
-      .single()
-  
-    if (insertError) {
-      setError(`Gagal simpan: ${insertError.message}`)
+      .update(updatePayload)
+      .eq("id", product.id)
+    
+    if (updateError) {
+      setError(`Gagal update: ${updateError.message}`)
       setLoading(false)
       return
     }
     
-    await logActivity(newProduct.id, nameEn)
+    await logUpdateActivity(newImageUrl)
     
     router.push("/admin/products")
     router.refresh()
@@ -182,6 +274,34 @@ const handleSubmit = async (e: React.FormEvent) => {
   } catch (err: any) {
     setError(`Error: ${err?.message || "Unknown error"}`)
     setLoading(false)
+  }
+}
+
+const handleDelete = async () => {
+  setDeleting(true)
+  setError("")
+  
+  try {
+    await logDeleteActivity()
+    const { error: deleteError } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", product.id)
+    
+    if (deleteError) {
+      setError(`Gagal hapus: ${deleteError.message}`)
+      setDeleting(false)
+      setShowDeleteModal(false)
+      return
+    }
+    
+    router.push("/admin/products")
+    router.refresh()
+    
+  } catch (err: any) {
+    setError(`Error: ${err?.message || "Unknown error"}`)
+    setDeleting(false)
+    setShowDeleteModal(false)
   }
 }
 
@@ -200,10 +320,10 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       {/* Header */}
       <h1 className="font-cormorant font-light text-3xl text-dzan-earth mb-2 mt-2">
-        Add New Product
+        Edit Product
       </h1>
       <p className="text-xs text-dzan-stone mb-6">
-        Fill all fields to add a new product to catalog
+        Update product details or remove from catalog
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -224,7 +344,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               onChange={(e) => setNameEn(e.target.value)}
               required
               className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-              placeholder="e.g. Bamboo Tumbler Lawu"
             />
           </div>
           
@@ -238,7 +357,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               onChange={(e) => setNameId(e.target.value)}
               required
               className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-              placeholder="e.g. Tumbler Bambu Lawu"
             />
           </div>
           
@@ -251,7 +369,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               value={slug}
               readOnly
               className="w-full bg-dzan-stone/10 border border-dzan-brown/20 rounded-sm p-2 text-sm text-dzan-stone"
-              placeholder="bamboo-tumbler-lawu"
             />
           </div>
         </div>
@@ -272,7 +389,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               required
               rows={3}
               className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-              placeholder="Tell the story of this product..."
             />
           </div>
           
@@ -286,7 +402,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               required
               rows={3}
               className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-              placeholder="Cerita produk dalam bahasa Indonesia..."
             />
           </div>
         </div>
@@ -307,7 +422,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               onChange={(e) => setCategory(e.target.value)}
               required
               className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-              placeholder="e.g. Bambu, Batik, Kayu, Rotan, etc."
             />
           </div>
           
@@ -328,11 +442,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </option>
               ))}
             </select>
-            {artisans.length === 0 && (
-              <p className="text-[10px] text-dzan-stone italic mt-1">
-                Belum ada artisan. Tambah di /admin/artisans dulu.
-              </p>
-            )}
           </div>
         </div>
 
@@ -352,7 +461,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               onChange={(e) => setMaterial(e.target.value)}
               required
               className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-              placeholder="e.g. Bambu Apus, Cotton Primissima"
             />
           </div>
           
@@ -368,7 +476,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 required
                 min="1"
                 className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-                placeholder="20"
               />
             </div>
             <div>
@@ -383,27 +490,28 @@ const handleSubmit = async (e: React.FormEvent) => {
                 required
                 min="0"
                 className="w-full text-dzan-dark bg-dzan-cream border border-dzan-brown/20 rounded-sm p-2 text-sm"
-                placeholder="100"
               />
             </div>
           </div>
         </div>
 
-        {/* SECTION 5: Image Upload */}
+        {/* SECTION 5: Image */}
         <div className="bg-white rounded-sm p-4 space-y-3">
           <p className="text-[10px] tracking-[2px] uppercase text-dzan-amber">
-            Product Image *
+            Product Image
           </p>
           
-          {imagePreview && (
-            <div className="relative w-full aspect-square bg-dzan-warm rounded-sm overflow-hidden">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
+          {/* Preview — show new if uploaded, else show existing */}
+          <div className="relative w-full aspect-square bg-dzan-warm rounded-sm overflow-hidden">
+            <img
+              src={imagePreview || existingImageUrl}
+              alt="Product preview"
+              className="w-full h-full object-cover"
+            />
+            <span className="absolute top-2 left-2 bg-dzan-earth/85 text-dzan-cream text-[9px] tracking-[1.5px] uppercase px-2.5 py-1 rounded-full">
+              {imagePreview ? "New Preview" : "Current Image"}
+            </span>
+          </div>
           
           <div>
             <input
@@ -413,7 +521,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               className="w-full text-sm text-dzan-earth"
             />
             <p className="text-[10px] text-dzan-stone italic mt-1">
-              Max 5 MB. Format: JPG, PNG, WebP
+              Kosongkan jika tidak ingin mengubah foto. Max 5 MB. Format: JPG, PNG, WebP.
             </p>
           </div>
         </div>
@@ -451,16 +559,82 @@ const handleSubmit = async (e: React.FormEvent) => {
           <p className="text-xs text-red-600 italic">{error}</p>
         )}
 
+        {/* Save Button */}
         <button
           type="submit"
           disabled={loading}
           className="w-full bg-dzan-earth text-dzan-cream text-xs tracking-[3px] uppercase py-4 rounded-sm disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Save Product"}
+          {loading ? "Saving..." : "Save Changes"}
         </button>
+
+        {/* DANGER ZONE */}
+        <div className="bg-red-50 border border-red-200 rounded-sm p-4 space-y-3 mt-8">
+          <div>
+            <p className="text-[10px] tracking-[2px] uppercase text-red-700 font-medium">
+              ⚠ Zona Hati-Hati
+            </p>
+            <p className="text-[11px] text-red-600 mt-1">
+              Aksi ini permanen, hati-hati ya
+            </p>
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full bg-red-600 hover:bg-red-700 text-white text-xs tracking-[3px] uppercase py-3 rounded-sm transition-colors"
+          >
+            Hapus Produk
+          </button>
+        </div>
       </form>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deleting) {
+              setShowDeleteModal(false)
+            }
+          }}
+        >
+          <div className="bg-dzan-cream rounded-sm p-7 max-w-sm w-full shadow-xl">
+            
+            <div className="text-2xl mb-2">⚠️</div>
+            
+            <h3 className="font-cormorant text-2xl text-dzan-earth mb-3">
+              Hapus Produk?
+            </h3>
+            
+            <p className="text-sm text-dzan-stone mb-6 leading-relaxed">
+              Yakin mau hapus <span className="text-dzan-earth font-medium italic">"{product.name_en}"</span>?
+              Setelah dihapus tidak bisa dibatalkan lho.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="flex-1 bg-dzan-sage/90 hover:bg-dzan-sage text-white text-[11px] tracking-[2px] uppercase font-medium px-4 py-3 rounded-full transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[11px] tracking-[2px] uppercase font-medium px-4 py-3 rounded-full transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Menghapus..." : "Iya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
 
-export default NewProductForm
+export default EditProductForm
