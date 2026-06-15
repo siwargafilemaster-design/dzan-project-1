@@ -1,8 +1,10 @@
+// app/product/[slug]/page.tsx
+
 import { supabase } from "@/lib/supabase"
-import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import SectionLabel from "@/components/SectionLabel"
+import ProductGallery from "./ProductGallery"
 
 async function getProduct(slug: string) {
   const { data, error } = await supabase
@@ -25,29 +27,49 @@ async function getProduct(slug: string) {
   return data
 }
 
+async function getProductPhotos(productId: number) {
+  const { data, error } = await supabase
+    .from("product_photos")
+    .select("*")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true })
+
+  if (error) {
+    console.error("Error fetching product photos:", error)
+    return []
+  }
+
+  return data || []
+}
+
 type Props = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 const ProductDetailPage = async ({ params }: Props) => {
-  const product = await getProduct(params.slug)
+  const { slug } = await params
+  const product = await getProduct(slug)
 
   if (!product) {
     notFound()
   }
 
+  // Fetch detail photos dari product_photos table
+  const detailPhotos = await getProductPhotos(product.id)
+
+  // Combine: image_url sebagai photo pertama + product_photos sebagai gallery
+  const allPhotos = [
+    { id: 0, photo_url: product.image_url, sort_order: -1 },
+    ...detailPhotos,
+  ]
+
   return (
     <main className="bg-dzan-cream min-h-screen pt-16 pb-12">
-      {/* Image */}
-      <div className="relative w-full aspect-square bg-dzan-earth">
-        <Image
-          src={product.image_url}
-          alt={product.name_en}
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
+      {/* GALLERY — Swipe-able dengan counter + thumbnails */}
+      <ProductGallery 
+        photos={allPhotos} 
+        productName={product.name_en} 
+      />
 
       {/* Content */}
       <section className="px-6 py-8">
@@ -113,7 +135,7 @@ const ProductDetailPage = async ({ params }: Props) => {
 
         {/* CTA */}
         <a
-          href={`https://wa.me/6281234567890?text=Hi, I'm interested in ${product.name_en} (${product.slug})`}
+          href={`https://wa.me/6282226585576?text=Hi, I'm interested in ${product.name_en} (${product.slug})`}
           target="_blank"
           rel="noopener noreferrer"
           className="block w-full bg-dzan-earth text-dzan-cream text-center text-xs tracking-[3px] font-medium uppercase py-4 rounded-sm"

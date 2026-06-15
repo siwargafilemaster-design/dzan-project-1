@@ -21,7 +21,7 @@ const getActions = (role: string, scope: string | null) => {
     { id: "products", icon: "📦", label: "Products", href: "/admin/products", scopes: ["product"] },
     { id: "artisans", icon: "👥", label: "Artisans", href: "/admin/artisans", scopes: ["product", "sales"] },
     { id: "media", icon: "🎬", label: "Hero Video", href: "/admin/media", scopes: ["creative"] },
-    { id: "photos", icon: "📷", label: "Photo Upload", href: "/admin/photos", scopes: ["creative"] },
+    { id: "photos", icon: "📷", label: "Photo Upload", href: "/admin/photo-upload", scopes: ["creative"] },
     { id: "bts", icon: "🎨", label: "Behind The Scenes", href: "/admin/bts", scopes: ["creative"] },
     { id: "qr", icon: "📱", label: "QR Codes", href: "/admin/qr", scopes: ["product", "creative"] },
     { id: "inquiries", icon: "✉️", label: "Inquiries", href: "/admin/inquiries", scopes: ["sales"] },

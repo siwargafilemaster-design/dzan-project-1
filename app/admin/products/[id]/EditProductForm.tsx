@@ -559,6 +559,25 @@ const handleDelete = async () => {
           <p className="text-xs text-red-600 italic">{error}</p>
         )}
 
+        {/* MANAGE PHOTOS SECTION */}
+        <div className="bg-dzan-warm/30 border border-dzan-amber/30 rounded-sm p-4 space-y-3">
+          <div>
+            <p className="text-[10px] tracking-[2px] uppercase text-dzan-amber font-medium">
+              📸 Detail Photos
+            </p>
+            <p className="text-[11px] text-dzan-stone mt-1 italic">
+              Kelola foto detail dari berbagai angle untuk produk ini.
+            </p>
+          </div>
+          
+          <Link
+            href={`/admin/products/${product.id}/photos`}
+            className="block w-full bg-dzan-sage hover:opacity-90 text-white text-xs tracking-[2px] uppercase text-center py-3 rounded-sm transition-opacity"
+          >
+            Manage Photos →
+          </Link>
+        </div>
+
         {/* Save Button */}
         <button
           type="submit"
