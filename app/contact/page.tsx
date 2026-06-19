@@ -1,6 +1,30 @@
 import SectionLabel from "@/components/SectionLabel"
+import { 
+  getSettingsByKeys, 
+  buildWhatsAppUrl 
+} from "@/lib/settings"
 
-const ContactPage = () => {
+const ContactPage = async () => {
+  // Fetch all contact-related settings in one query
+  const settings = await getSettingsByKeys([
+    "whatsapp_sales",
+    "email_contact",
+    "instagram_handle",
+    "business_address",
+  ])
+  
+  // Extract values with fallbacks
+  const whatsappRaw = settings.whatsapp_sales || "+6282226585576"
+  const emailContact = settings.email_contact || "info@dzanlawuheritage.com"
+  const instagramHandle = settings.instagram_handle || "dzanlawuheritage"
+  
+  // Build derived values
+  const whatsappUrl = buildWhatsAppUrl(
+    whatsappRaw, 
+    "Halo DZAN, saya ingin bertanya."
+  )
+  const instagramUrl = `https://www.instagram.com/${instagramHandle}/`
+  
   return (
     <main className="bg-dzan-cream min-h-screen pt-28 pb-12">
       {/* Header */}
@@ -18,7 +42,7 @@ const ContactPage = () => {
       <section className="px-6 space-y-4">
         {/* WhatsApp */}
         <a
-          href="https://wa.me/6281234567890"
+          href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="block bg-dzan-warm/40 rounded-sm p-5 border-l-4 border-dzan-amber"
@@ -27,7 +51,7 @@ const ContactPage = () => {
             WhatsApp
           </p>
           <p className="font-cormorant text-xl text-dzan-earth">
-            +62 812-3456-7890
+            {whatsappRaw}
           </p>
           <p className="text-xs text-dzan-stone mt-1">
             Fastest response, 24/7
@@ -36,14 +60,14 @@ const ContactPage = () => {
 
         {/* Email */}
         <a
-          href="mailto:hello@dzanlawu.com"
+          href={`mailto:${emailContact}`}
           className="block bg-dzan-warm/40 rounded-sm p-5 border-l-4 border-dzan-brown"
         >
           <p className="text-[10px] tracking-[2px] uppercase text-dzan-amber mb-1">
             Email
           </p>
           <p className="font-cormorant text-xl text-dzan-earth">
-            hello@dzanlawu.com
+            {emailContact}
           </p>
           <p className="text-xs text-dzan-stone mt-1">
             Business inquiries
@@ -52,7 +76,7 @@ const ContactPage = () => {
 
         {/* Instagram */}
         <a
-          href="https://instagram.com/dzanlawuheritage"
+          href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="block bg-dzan-warm/40 rounded-sm p-5 border-l-4 border-dzan-sage"
@@ -61,7 +85,7 @@ const ContactPage = () => {
             Instagram
           </p>
           <p className="font-cormorant text-xl text-dzan-earth">
-            @dzanlawuheritage
+            @{instagramHandle}
           </p>
           <p className="text-xs text-dzan-stone mt-1">
             Behind the scenes

@@ -3,6 +3,7 @@ import Marquee from "@/components/Marquee"
 import SectionLabel from "@/components/SectionLabel"
 import ProductCard from "@/components/ProductCard"
 import Link from "next/link"
+import { getSettingsByKeys } from "@/lib/settings"
 
 async function getHeroVideo() {
   const { data, error } = await supabase
@@ -34,43 +35,111 @@ async function getFeaturedProducts() {
   return data || []
 }
 
+async function getStats() {
+  // Count artisans (active only)
+  const { count: artisansCount } = await supabase
+    .from("artisans")
+    .select("*", { count: "exact", head: true })
+    .eq("is_active", true)
+  
+  // Count products (available only)
+  const { count: productsCount } = await supabase
+    .from("products")
+    .select("*", { count: "exact", head: true })
+    .eq("is_available", true)
+  
+  // Count distinct categories
+  const { data: categoriesData } = await supabase
+    .from("products")
+    .select("category")
+    .eq("is_available", true)
+  
+  const uniqueCategories = new Set(
+    categoriesData?.map((p) => p.category) || []
+  )
+  
+  // Format number untuk display
+  const formatStat = (num: number | null): string => {
+    if (!num) return "0"
+    if (num < 10) return `${num}`
+    if (num < 100) return `${Math.floor(num / 10) * 10}+`
+    return `${Math.floor(num / 100) * 100}+`
+  }
+  
+  return {
+    artisans: formatStat(artisansCount),
+    products: formatStat(productsCount),
+    categories: `${uniqueCategories.size}`,
+  }
+}
 
 const Home = async () => {
-  const videoUrl = await getHeroVideo()
-  const featuredProducts = await getFeaturedProducts()
+  // Fetch all data in parallel for performance
+  const [videoUrl, featuredProducts, stats, settings] = await Promise.all([
+    getHeroVideo(),
+    getFeaturedProducts(),
+    getStats(),
+    getSettingsByKeys([
+      "business_name",
+      "business_address",
+      "tagline_en",
+      "about_short",
+    ]),
+  ])
+  
+  // Extract settings with fallbacks
+  const businessName = settings.business_name || "DZAN Lawu Heritage"
+  const businessAddress = settings.business_address || "Karanganyar, Jawa Tengah, Indonesia"
+  const taglineEn = settings.tagline_en || "Where Heritage Meets the World"
+  const aboutShort = settings.about_short || 
+    "A curated house of handcrafted products from the heart of Karanganyar, Central Java. Bridging noble artisans of Lawu Mountain with the global market."
+  
+  // Transform business address for hero eyebrow display
+  // "Karanganyar, Jawa Tengah, Indonesia" → "Karanganyar · Central Java · Indonesia"
+  const heroLocationDisplay = businessAddress
+    .replace("Jawa Tengah", "Central Java")
+    .replace(/,\s+/g, " · ")
+  
+  // Split business name for hero title
+  // "DZAN Lawu Heritage" → ["DZAN Lawu", "Heritage"]
+  const nameParts = businessName.split(" ")
+  const heroTitleMain = nameParts.slice(0, -1).join(" ") || businessName
+  const heroTitleAccent = nameParts[nameParts.length - 1] || ""
 
   return (
     <main>
-      {/* HERO SECTION */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {videoUrl ? (
-          <video
-            src={videoUrl}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-dzan-dark" />
-        )}
-
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-dzan-dark/30 to-dzan-dark/60" />
-
-        {/* Content */}
-        <div className="relative z-10 text-center px-6">
+      {/* HERO VIDEO — 16:9 CINEMATIC */}
+      <section className="relative bg-dzan-dark pt-20">
+        <div className="relative aspect-video overflow-hidden">
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-dzan-dark" />
+          )}
+          
+          {/* Subtle bottom gradient for smooth transition */}
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-dzan-dark/80" />
+        </div>
+        
+        {/* HERO TEXT BLOCK — Di bawah video */}
+        <div className="bg-dzan-dark px-6 py-12 text-center">
           <p className="text-[10px] tracking-[4px] font-light uppercase text-dzan-amber mb-4 opacity-90">
-            Karanganyar · Central Java · Indonesia
+            {heroLocationDisplay}
           </p>
           <h1 className="font-cormorant font-light text-5xl sm:text-6xl leading-tight text-dzan-cream mb-4">
-            DZAN Lawu
+            {heroTitleMain}
             <br />
-            <em className="italic text-dzan-amber">Heritage</em>
+            <em className="italic text-dzan-amber">{heroTitleAccent}</em>
           </h1>
           <p className="text-xs tracking-[2px] font-light uppercase text-dzan-cream/70 mb-10">
-            Where Heritage Meets the World
+            {taglineEn}
           </p>
           <a
             href="#about"
@@ -78,11 +147,6 @@ const Home = async () => {
           >
             Explore ↓
           </a>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-          <div className="w-px h-10 bg-dzan-amber animate-pulse" />
         </div>
       </section>
 
@@ -92,7 +156,7 @@ const Home = async () => {
       <section id="about" className="bg-dzan-cream px-6 py-20 text-center">
         <SectionLabel className="mb-6">Our Identity</SectionLabel>
 
-        {/* DZAN Letters */}
+        {/* DZAN Letters — Brand DNA, never changes */}
         <div className="flex justify-center mb-8">
           {[
             { letter: "D", word: "Distinctive" },
@@ -116,11 +180,9 @@ const Home = async () => {
           ))}
         </div>
 
-        {/* Description EN */}
+        {/* Description EN — Dynamic dari Settings */}
         <p className="text-sm leading-relaxed text-dzan-earth max-w-md mx-auto mb-4 font-light">
-          A curated house of handcrafted products from the heart of
-          Karanganyar, Central Java. Bridging noble artisans of Lawu
-          Mountain with the global market.
+          {aboutShort}
         </p>
 
         {/* Divider */}
@@ -130,7 +192,7 @@ const Home = async () => {
           <div className="h-px w-12 bg-dzan-amber" />
         </div>
 
-        {/* Description ID */}
+        {/* Description ID — Tetap hardcode (sesuai keputusan) */}
         <p className="text-xs leading-relaxed text-dzan-stone max-w-md mx-auto">
           Rumah kurasi produk kerajinan tangan dari jantung Karanganyar —
           membawa warisan budaya Lawu ke panggung dunia.
@@ -167,16 +229,16 @@ const Home = async () => {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* STATS — Auto-count dari DB + Since 2024 */}
       <section className="bg-dzan-earth px-6 py-16 text-center">
         <SectionLabel className="mb-8">Our Heritage</SectionLabel>
 
         <div className="grid grid-cols-2 gap-8 max-w-sm mx-auto">
           {[
-            { number: "3+", label: "Artisans" },
-            { number: "12+", label: "Products" },
-            { number: "3", label: "Categories" },
-            { number: "🇩🇪", label: "Export Market" },
+            { number: stats.artisans, label: "Artisans" },
+            { number: stats.products, label: "Products" },
+            { number: stats.categories, label: "Categories" },
+            { number: "2024", label: "Since" },
           ].map((stat, i) => (
             <div key={i} className="text-center">
               <span className="font-cormorant font-light text-5xl text-dzan-amber block leading-none">
@@ -190,7 +252,7 @@ const Home = async () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — Tagline tetap hardcode (poetic, stable) */}
       <section className="bg-dzan-cream px-6 py-20 text-center">
         <h2 className="font-cormorant font-light text-3xl text-dzan-earth leading-tight mb-2">
           Crafted with soul,
@@ -198,7 +260,7 @@ const Home = async () => {
           <em className="italic text-dzan-brown">made for the world.</em>
         </h2>
         <p className="text-xs tracking-[1px] text-dzan-stone mb-8">
-          Karanganyar · Central Java · Indonesia
+          {heroLocationDisplay}
         </p>
         <Link
           href="/catalog"

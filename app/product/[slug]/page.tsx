@@ -5,18 +5,21 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import SectionLabel from "@/components/SectionLabel"
 import ProductGallery from "./ProductGallery"
+import { getSetting, buildWhatsAppUrl } from "@/lib/settings"
 
 async function getProduct(slug: string) {
   const { data, error } = await supabase
     .from("products")
-    .select(`
+    .select(
+      `
       *,
       artisans (
         name,
         location,
         craft_type
       )
-    `)
+    `
+    )
     .eq("slug", slug)
     .single()
 
@@ -63,13 +66,18 @@ const ProductDetailPage = async ({ params }: Props) => {
     ...detailPhotos,
   ]
 
+  // Fetch settings untuk WhatsApp CTA
+  const waNumber = await getSetting("whatsapp_sales")
+  const waTemplate = await getSetting("inquiry_wa_template")
+
+  // Build personalized message
+  const waMessage = waTemplate.replace("[PRODUCT]", product.name_en)
+  const waUrl = buildWhatsAppUrl(waNumber, waMessage)
+
   return (
     <main className="bg-dzan-cream min-h-screen pt-16 pb-12">
       {/* GALLERY — Swipe-able dengan counter + thumbnails */}
-      <ProductGallery 
-        photos={allPhotos} 
-        productName={product.name_en} 
-      />
+      <ProductGallery photos={allPhotos} productName={product.name_en} />
 
       {/* Content */}
       <section className="px-6 py-8">
@@ -79,9 +87,7 @@ const ProductDetailPage = async ({ params }: Props) => {
         <h1 className="font-cormorant font-light text-3xl text-dzan-earth mb-1">
           {product.name_en}
         </h1>
-        <p className="text-sm italic text-dzan-stone mb-6">
-          {product.name_id}
-        </p>
+        <p className="text-sm italic text-dzan-stone mb-6">{product.name_id}</p>
 
         {/* Divider */}
         <div className="flex items-center gap-3 mb-6">
@@ -135,7 +141,7 @@ const ProductDetailPage = async ({ params }: Props) => {
 
         {/* CTA */}
         <a
-          href={`https://wa.me/6282226585576?text=Hi, I'm interested in ${product.name_en} (${product.slug})`}
+          href={waUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="block w-full bg-dzan-earth text-dzan-cream text-center text-xs tracking-[3px] font-medium uppercase py-4 rounded-sm"
