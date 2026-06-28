@@ -26,14 +26,14 @@ const AccountPage = async () => {
   if (!profile?.full_name) redirect("/onboarding")
 
   // Cek apakah user ini admin (untuk banner mode preview)
-  const isAdmin = profile.role === "admin" || profile.role === "super_admin"
+  const isAdmin = profile.role === "admin" || profile.role === "super_admin" || profile.role === "freelancer"
 
   // Update last visit
   await supabase
     .from("profiles")
     .update({ last_visit_at: new Date().toISOString() })
     .eq("id", user.id)
-
+    
   // Get saved products
   const { data: savedProducts } = await supabase
     .from("saved_products")

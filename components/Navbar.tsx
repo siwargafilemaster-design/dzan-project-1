@@ -47,7 +47,7 @@ const Navbar = () => {
         {user && profile ? (
           <Link
             href={
-              profile.role === "super_admin" || profile.role === "admin"
+              profile.role === "super_admin" || profile.role === "admin" || profile.role === "freelancer"
                 ? "/admin"
                 : "/account"
             }

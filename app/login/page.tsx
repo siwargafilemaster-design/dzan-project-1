@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase-browser"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
+import PasswordInput from "@/components/ui/PasswordInput"
 
 const LoginPage = () => {
   const router = useRouter()
@@ -56,7 +57,7 @@ const LoginPage = () => {
         router.push("/onboarding")
       }
       // Step 2: Admin & super_admin ke /admin
-      else if (profile.role === "super_admin" || profile.role === "admin") {
+      else if (profile.role === "super_admin" || profile.role === "admin" || profile.role === "freelancer") {
         router.push("/admin")
       }
       // Default: ke /account (buyer)
@@ -113,6 +114,7 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              placeholder="e.g. email@dzanlawu.com"
               className="w-full bg-white border border-dzan-brown/20 rounded-sm p-3 text-sm text-dzan-earth"
             />
           </div>
@@ -120,13 +122,20 @@ const LoginPage = () => {
             <label className="text-[9px] tracking-[2px] uppercase text-dzan-amber block mb-2">
               Password
             </label>
-            <input
-              type="password"
+            <PasswordInput             
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
               required
-              className="w-full bg-white border border-dzan-brown/20 rounded-sm p-3 text-sm text-dzan-earth"
             />
+            <div className="text-right mt-2">
+  <Link 
+    href="/forgot-password" 
+    className="text-[11px] text-dzan-stone hover:text-dzan-amber italic"
+  >
+    Lupa password?
+  </Link>
+</div>
           </div>
 
           {error && (

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase-browser"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
+import PasswordInput from "@/components/ui/PasswordInput"
 
 const SignupPage = () => {
   const router = useRouter()
@@ -91,16 +92,14 @@ const SignupPage = () => {
             <label className="text-[9px] tracking-[2px] uppercase text-dzan-amber block mb-2">
               Password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
-              className="w-full bg-white border border-dzan-brown/20 rounded-sm p-3 text-sm text-dzan-earth"
+              minLength={8}
             />
             <p className="text-[9px] text-dzan-stone mt-1 italic">
-              Minimum 6 characters
+              Minimum 8 characters
             </p>
           </div>
 

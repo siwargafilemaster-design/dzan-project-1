@@ -6,6 +6,7 @@ import ActivityFeedSection from "@/components/ActivityFeedSection"
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Admin",
+  freelancer: "Freelancer"
 }
 
 const ROLE_SCOPE_LABELS: Record<string, string> = {
@@ -25,7 +26,7 @@ const getActions = (role: string, scope: string | null) => {
     { id: "bts", icon: "🎨", label: "Behind The Scenes", href: "/admin/bts", scopes: ["creative"] },
     { id: "qr", icon: "📱", label: "QR Codes", href: "/admin/qr", scopes: ["product", "creative"] },
     { id: "inquiries", icon: "✉️", label: "Inquiries", href: "/admin/inquiries", scopes: ["sales"] },
-    { id: "team", icon: "👥", label: "Team Manage", href: "/admin/team", scopes: [] },
+    { id: "team", icon: "👥", label: "Team Manage", href: "/admin/team", scopes: ["sales", "creative", "product"] },
     { id: "settings", icon: "⚙️", label: "Settings", href: "/admin/settings", scopes: [] },
   ]
 
@@ -33,7 +34,7 @@ const getActions = (role: string, scope: string | null) => {
     ...a,
     enabled:
       role === "super_admin" ||
-      (role === "admin" && a.scopes.includes(scope || "")),
+      (role === "admin" || role === "freelancer" && a.scopes.includes(scope || "")),
   }))
 }
 
@@ -182,6 +183,16 @@ const AdminDashboard = async () => {
           👁️ View as Buyer
         </Link>
       </section>
+
+      {/* Change Password */}
+      <section className="px-6 pb-4">
+        <Link
+         href="/account/change-password"
+         className="block w-full text-center text-xs tracking-[2px] uppercase text-dzan-stone hover:text-dzan-amber border border-dzan-stone/30 rounded-sm py-3 transition-colors"
+        >
+          🔐 Change Password
+        </Link>
+      </section>    
 
       {/* Logout */}
       <section className="px-6">
