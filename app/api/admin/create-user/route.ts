@@ -9,17 +9,40 @@ import {
 } from "@/lib/permissions"
 
 export async function POST(request: Request) {
+  console.log("🟢 SERVER: API called")
+  console.log("🟢 SERVER: Content-Type:", request.headers.get("content-type"))
+  
   try {
-    const body = await request.json()
-    const { email, full_name, role, role_scope, recruited_by } = body
+    // ⚡ DEBUG: baca body sebagai TEXT dulu
+    const rawBody = await request.text()
+    console.log("🟢 SERVER: Raw body received:", rawBody)
+    console.log("🟢 SERVER: Body length:", rawBody.length)
     
-    // Validate input
-    if (!email || !full_name || !role) {
+    // Parse JSON manual
+    let body
+    try {
+      body = JSON.parse(rawBody)
+      console.log("🟢 SERVER: Parsed body:", body)
+    } catch (parseError) {
+      console.error("❌ SERVER: JSON parse failed:", parseError)
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid JSON body", rawBody }, 
         { status: 400 }
       )
     }
+    
+    const { newPassword } = body
+    console.log("🟢 SERVER: newPassword received:", newPassword ? "yes (length " + newPassword.length + ")" : "no")
+    
+    // Validate
+    if (!newPassword || newPassword.length < 8) {
+      return NextResponse.json(
+        { error: "Password minimal 8 karakter" }, 
+        { status: 400 }
+      )
+    }
+    
+    // ... REST OF EXISTING CODE (get user, adminClient, etc)
     
     // Get viewer profile
     const serverSupabase = await createServerClient()

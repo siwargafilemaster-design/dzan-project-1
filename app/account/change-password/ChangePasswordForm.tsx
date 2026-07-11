@@ -3,151 +3,151 @@
 import { createClient } from "@/lib/supabase-browser"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import PasswordInput from "@/components/ui/PasswordInput"
 
 interface Props {
-  isFirstTime: boolean
+  isFirstTime?: boolean
 }
 
-const ChangePasswordForm = ({ isFirstTime }: Props) => {
+const ChangePasswordForm = ({ isFirstTime = false }: Props) => {
   const router = useRouter()
   const supabase = createClient()
-  
+
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  
+  const [success, setSuccess] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    
-    console.log("🔵 Submit triggered")
-    
+
     if (newPassword.length < 8) {
       setError("Password baru minimal 8 karakter")
       return
     }
-    
+
     if (newPassword !== confirmPassword) {
       setError("Konfirmasi password tidak cocok")
       return
     }
-    
+
     setLoading(true)
-    console.log("🔵 Loading set to true")
-    
+
     try {
-      // STEP 1: Update password
-      console.log("🔵 Calling supabase.auth.updateUser...")
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-      
-      if (updateError) {
-        console.error("❌ updateUser error:", updateError)
-        setError(`Gagal: ${updateError.message}`)
-        setLoading(false)
-        return
-      }
-      
-      console.log("✅ Password updated in auth")
-      
-      // STEP 2: Call API
-      console.log("🔵 Calling /api/account/complete-password-change...")
-      
-      const response = await fetch("/api/account/complete-password-change", {
+      const response = await fetch("/api/account/update-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
       })
-      
-      console.log("🔵 API response status:", response.status)
-      console.log("🔵 API response ok:", response.ok)
-      
+
       const data = await response.json()
-      console.log("🔵 API response data:", data)
-      
+
       if (!response.ok) {
-        console.error("❌ API error:", data.error)
-        setError(`Server error: ${data.error || "Unknown"}`)
+        setError(`Gagal: ${data.error || "Unknown error"}`)
         setLoading(false)
         return
       }
-      
-      // STEP 3: Redirect
-      const role = data.role || "buyer"
-      console.log("✅ Success, redirecting to role:", role)
-      
-      router.push(role === "buyer" ? "/account" : "/admin")
-      router.refresh()
-      
+
+      // Success — show popup
+      setSuccess(true)
+      setLoading(false)
     } catch (err: any) {
-      console.error("❌ Caught error:", err)
-      setError(`Error: ${err.message || "Unknown error"}`)
+      setError(`Error: ${err.message || "Network error"}`)
       setLoading(false)
     }
   }
-  
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Toggle Show/Hide Password */}
-      <div className="flex justify-end">
+
+  const handleConfirmAndLogout = async () => {
+    console.log("🔵 Logout button clicked")
+    try {
+      await supabase.auth.signOut()
+      console.log("✅ Signed out, redirecting...")
+      window.location.href = "/login?message=password_changed"
+    } catch (err: any) {
+      console.error("❌ Signout error:", err)
+      // Force redirect anyway
+      window.location.href = "/login?message=password_changed"
+    }
+  }
+
+  // Success popup
+  if (success) {
+    return (
+      <div className="bg-white border border-dzan-amber/30 rounded-sm p-6 text-center">
+        <div className="text-5xl mb-3">🎉</div>
+        <h2 className="font-cormorant text-2xl text-dzan-earth mb-3">
+          Ganti Password Beres!
+        </h2>
+        <p className="text-sm text-dzan-stone italic mb-4 leading-relaxed">
+          Password baru sudah aktif nih.
+          <br />
+          Yuk login ulang dengan password baru kamu! 🔐
+        </p>
+
+        <div className="bg-dzan-warm/30 rounded-sm p-3 mb-5">
+          <p className="text-[11px] text-dzan-earth italic">
+            ⚠️ Ingat-ingat password barunya ya! Catat dulu deh sebelum lanjut!
+          </p>
+        </div>
+
         <button
           type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="text-[10px] tracking-[1.5px] uppercase text-dzan-amber hover:text-dzan-earth flex items-center gap-1.5"
+          onClick={handleConfirmAndLogout}
+          className="w-full bg-dzan-earth text-dzan-cream text-xs tracking-[3px] uppercase py-4 rounded-sm hover:bg-dzan-brown transition-colors cursor-pointer"
         >
-          {showPassword ? (
-            <>
-              <span>🙈</span>
-              <span>Sembunyikan</span>
-            </>
-          ) : (
-            <>
-              <span>👁️</span>
-              <span>Tampilkan Password</span>
-            </>
-          )}
+          Login dengan Password Baru →
         </button>
       </div>
-      
+    )
+  }
+
+  // Form input
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="text-[10px] tracking-[2px] uppercase text-dzan-amber block mb-2">
           Password Baru *
         </label>
-        <input
-          type={showPassword ? "text" : "password"}
+        <PasswordInput
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
           minLength={8}
-          className="w-full bg-white border border-dzan-brown/20 rounded-sm p-3 text-sm text-dzan-earth"
           placeholder="Minimal 8 karakter"
         />
+        <p className="text-[10px] text-dzan-stone italic mt-1">
+          Gunakan kombinasi huruf, angka, dan simbol untuk keamanan
+        </p>
       </div>
-      
+
       <div>
         <label className="text-[10px] tracking-[2px] uppercase text-dzan-amber block mb-2">
           Konfirmasi Password Baru *
         </label>
-        <input
-          type={showPassword ? "text" : "password"}
+        <PasswordInput
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          className="w-full bg-white border border-dzan-brown/20 rounded-sm p-3 text-sm text-dzan-earth"
-          placeholder="Ketik ulang"
+          placeholder="Ketik ulang password baru"
         />
       </div>
-      
+
+      <div className="bg-dzan-warm/30 border border-dzan-amber/30 rounded-sm p-3">
+        <p className="text-[11px] text-dzan-earth italic">
+          {isFirstTime
+            ? "💡 Setelah buat password, Anda akan login ulang dengan password baru."
+            : "💡 Setelah ganti password, Anda akan diminta login ulang dengan password baru."}
+        </p>
+      </div>
+
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-sm p-3">
           <p className="text-xs text-red-700 italic">{error}</p>
         </div>
       )}
-      
+
       <button
         type="submit"
         disabled={loading}
@@ -155,16 +155,15 @@ const ChangePasswordForm = ({ isFirstTime }: Props) => {
       >
         {loading ? "Menyimpan..." : "Ganti Password"}
       </button>
-      
-      {!isFirstTime && (
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="w-full text-xs tracking-[2px] uppercase text-dzan-stone py-3"
-        >
-          Batal
-        </button>
-      )}
+
+      <button
+        type="button"
+        onClick={() => router.back()}
+        disabled={loading}
+        className="w-full text-xs tracking-[2px] uppercase text-dzan-stone py-3"
+      >
+        Batal
+      </button>
     </form>
   )
 }

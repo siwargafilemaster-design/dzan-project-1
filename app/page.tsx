@@ -135,7 +135,7 @@ const Home = async () => {
           </p>
           <h1 className="font-cormorant font-light text-5xl sm:text-6xl leading-tight text-dzan-cream mb-4">
             {heroTitleMain}
-            <br />
+            <br/>
             <em className="italic text-dzan-amber">{heroTitleAccent}</em>
           </h1>
           <p className="text-xs tracking-[2px] font-light uppercase text-dzan-cream/70 mb-10">

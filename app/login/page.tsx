@@ -1,25 +1,66 @@
 "use client"
 
 import { createClient } from "@/lib/supabase-browser"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
 import PasswordInput from "@/components/ui/PasswordInput"
 
 const LoginPage = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  
+  // Handle redirect params
+  const redirectTo = searchParams.get("redirect")
+  const action = searchParams.get("action")
+  
+  // Determine redirect URL after login
+  const getRedirectUrl = (userRole: string | null | undefined, fullName: string | null | undefined) => {
+    // Priority 1: Explicit redirect param
+    if (redirectTo) {
+      // Add ?openInquiry=true kalau action=inquire
+      if (action === "inquire") {
+        const separator = redirectTo.includes("?") ? "&" : "?"
+        return `${redirectTo}${separator}openInquiry=true`
+      }
+      return redirectTo
+    }
+    
+    // Priority 2: Onboarding untuk user tanpa full_name
+    if (!fullName) {
+      return "/onboarding"
+    }
+    
+    // Priority 3: Role-based
+    if (userRole === "super_admin" || userRole === "admin" || userRole === "freelancer") {
+      return "/admin"
+    }
+    
+    // Default: buyer ke /account
+    return "/account"
+  }
 
   const handleGoogleLogin = async () => {
     setLoading(true)
+    
+    // Include redirect params di OAuth callback
+    let callbackUrl = `${window.location.origin}/auth/callback`
+    if (redirectTo) {
+      callbackUrl += `?redirect=${encodeURIComponent(redirectTo)}`
+      if (action) {
+        callbackUrl += `&action=${action}`
+      }
+    }
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
       },
     })
     if (error) setError(error.message)
@@ -42,7 +83,7 @@ const LoginPage = () => {
       return
     }
 
-    // Cek role untuk redirect yang tepat (role-based routing)
+    // Cek role untuk redirect
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
@@ -52,28 +93,19 @@ const LoginPage = () => {
         .eq("id", user.id)
         .single()
       
-      // Step 1: Cek profile completion (user baru)
-      if (!profile?.full_name) {
-        router.push("/onboarding")
-      }
-      // Step 2: Admin & super_admin ke /admin
-      else if (profile.role === "super_admin" || profile.role === "admin" || profile.role === "freelancer") {
-        router.push("/admin")
-      }
-      // Default: ke /account (buyer)
-      else {
-        router.push("/account")
-      }
+      // Use smart redirect logic
+      const redirectUrl = getRedirectUrl(profile?.role, profile?.full_name)
+      router.push(redirectUrl)
     } else {
-      // Fallback (kalau user fetch gagal)
-      router.push("/account")
+      // Fallback
+      router.push(redirectTo || "/account")
     }
     
     router.refresh()
   }
 
   return (
-    <main className="min-h-screen bg-dzan-cream flex items-center justify-center px-6">
+    <main className="min-h-screen bg-dzan-cream flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <p className="text-[10px] tracking-[4px] uppercase text-dzan-amber mb-3">
@@ -83,6 +115,15 @@ const LoginPage = () => {
             Sign in to <em className="italic text-dzan-brown">DZAN</em>
           </h1>
         </div>
+        
+        {/* Action-specific banner */}
+        {action === "inquire" && (
+          <div className="bg-dzan-warm/30 border border-dzan-amber/30 rounded-sm p-3 mb-4">
+            <p className="text-xs text-dzan-earth italic text-center">
+              💌 Please sign in to submit your inquiry
+            </p>
+          </div>
+        )}
 
         {/* Google Button */}
         <button
@@ -129,13 +170,13 @@ const LoginPage = () => {
               required
             />
             <div className="text-right mt-2">
-  <Link 
-    href="/forgot-password" 
-    className="text-[11px] text-dzan-stone hover:text-dzan-amber italic"
-  >
-    Lupa password?
-  </Link>
-</div>
+              <Link 
+                href="/forgot-password" 
+                className="text-[11px] text-dzan-stone hover:text-dzan-amber italic"
+              >
+                Lupa password?
+              </Link>
+            </div>
           </div>
 
           {error && (
@@ -153,12 +194,15 @@ const LoginPage = () => {
 
         <p className="text-center text-xs text-dzan-stone mt-6">
           New to DZAN?{" "}
-          <Link href="/signup" className="text-dzan-brown underline">
+          <Link 
+            href={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}${action ? `&action=${action}` : ""}` : "/signup"} 
+            className="text-dzan-brown underline"
+          >
             Create account
           </Link>
         </p>
         <p className="text-center text-[10px] text-dzan-stone mt-4">
-          <Link href="/">← Browse without account</Link>
+          <Link href={redirectTo || "/"}>← Back</Link>
         </p>
       </div>
     </main>
