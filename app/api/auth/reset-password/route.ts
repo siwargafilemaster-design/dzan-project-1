@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase-server"
 
 export async function POST(request: Request) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
     if (!password || password.length < 8) {
       return NextResponse.json(
-        { error: 'Password minimal 8 karakter.' },
+        { error: "Password minimal 8 karakter." },
         { status: 400 }
       )
     }
@@ -21,33 +21,37 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Session tidak ditemukan. Link mungkin sudah kadaluarsa.' },
+        { error: "Session tidak ditemukan. Link mungkin sudah kadaluarsa." },
         { status: 401 }
       )
     }
 
-    // Update password — DI SERVER, tidak akan freeze
+    console.log("🔵 Updating password for user:", user.id)
+
+    // Update password — DI SERVER
     const { error: updateError } = await supabase.auth.updateUser({
       password,
     })
 
     if (updateError) {
-      console.error('[reset-password] updateUser error:', updateError.message)
+      console.error("❌ updateUser error:", updateError.message)
       return NextResponse.json(
         { error: updateError.message },
         { status: 400 }
       )
     }
 
-    // Logout supaya recovery session tidak tertinggal —
-    // user login ulang dengan password baru (lebih aman)
+    console.log("✅ Password updated, signing out...")
+
+    // Logout supaya recovery session tidak tertinggal
     await supabase.auth.signOut()
 
     return NextResponse.json({ success: true })
+    
   } catch (err) {
-    console.error('[reset-password] unexpected:', err)
+    console.error("❌ /api/auth/reset-password unexpected:", err)
     return NextResponse.json(
-      { error: 'Terjadi kesalahan server.' },
+      { error: "Terjadi kesalahan server." },
       { status: 500 }
     )
   }

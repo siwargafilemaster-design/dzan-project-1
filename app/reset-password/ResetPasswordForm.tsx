@@ -1,92 +1,120 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import PasswordInput from "@/components/ui/PasswordInput"
 
-export default function ResetPasswordForm({ email }: { email: string }) {
+interface Props {
+  email: string
+}
+
+export default function ResetPasswordForm({ email }: Props) {
   const router = useRouter()
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  
+  const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle")
+  const [errorMsg, setErrorMsg] = useState("")
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
     if (password.length < 8) {
-      setErrorMsg('Password minimal 8 karakter.')
-      setStatus('error')
+      setErrorMsg("Password minimal 8 karakter.")
+      setStatus("error")
       return
     }
+    
     if (password !== confirm) {
-      setErrorMsg('Konfirmasi password tidak cocok.')
-      setStatus('error')
+      setErrorMsg("Konfirmasi password tidak cocok.")
+      setStatus("error")
       return
     }
 
-    setStatus('loading')
-    setErrorMsg('')
+    setStatus("loading")
+    setErrorMsg("")
 
     try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        setErrorMsg(data.error ?? 'Gagal menyimpan password.')
-        setStatus('error')
+        setErrorMsg(data.error ?? "Gagal menyimpan password.")
+        setStatus("error")
         return
       }
 
-      // Sukses → arahkan ke login dengan pesan
-      router.push('/login?message=password_updated')
+      // Success → redirect ke login dengan pesan
+      router.push("/login?message=password_updated")
       router.refresh()
-    } catch {
-      setErrorMsg('Terjadi kesalahan jaringan. Coba lagi.')
-      setStatus('error')
+      
+    } catch (err) {
+      setErrorMsg("Terjadi kesalahan jaringan. Coba lagi.")
+      setStatus("error")
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-lg border p-6 space-y-4">
-        <h1 className="text-xl font-semibold">Atur Password Baru</h1>
-        <p className="text-sm text-gray-600">
-          Untuk akun: <strong>{email}</strong>
-        </p>
+    <main className="min-h-screen bg-dzan-cream flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <p className="text-[10px] tracking-[4px] uppercase text-dzan-amber mb-3">
+            Set New Password
+          </p>
+          <h1 className="font-cormorant font-light text-3xl text-dzan-earth">
+            Atur <em className="italic text-dzan-brown">Password Baru</em>
+          </h1>
+          <p className="text-xs text-dzan-stone italic mt-3">
+            Untuk akun: <strong className="text-dzan-earth">{email}</strong>
+          </p>
+        </div>
 
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password baru (min. 8 karakter)"
-          className="w-full rounded border px-3 py-2"
-          disabled={status === 'loading'}
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-[9px] tracking-[2px] uppercase text-dzan-amber block mb-2">
+              Password Baru
+            </label>
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimal 8 karakter"
+              required
+              minLength={8}
+            />
+          </div>
 
-        <input
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Ulangi password baru"
-          className="w-full rounded border px-3 py-2"
-          disabled={status === 'loading'}
-        />
+          <div>
+            <label className="text-[9px] tracking-[2px] uppercase text-dzan-amber block mb-2">
+              Konfirmasi Password
+            </label>
+            <PasswordInput
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Ulangi password baru"
+              required
+            />
+          </div>
 
-        {status === 'error' && (
-          <p className="text-sm text-red-600">{errorMsg}</p>
-        )}
+          {status === "error" && (
+            <div className="bg-red-50 border border-red-200 rounded-sm p-3">
+              <p className="text-xs text-red-700 italic">{errorMsg}</p>
+            </div>
+          )}
 
-        <button
-          onClick={handleSubmit}
-          disabled={status === 'loading'}
-          className="w-full rounded bg-black py-2 text-white disabled:opacity-50"
-        >
-          {status === 'loading' ? 'Menyimpan...' : 'Simpan Password Baru'}
-        </button>
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="w-full bg-dzan-earth text-dzan-cream text-xs tracking-[3px] font-medium uppercase py-4 rounded-sm disabled:opacity-50"
+          >
+            {status === "loading" ? "Menyimpan..." : "Simpan Password Baru"}
+          </button>
+        </form>
       </div>
-    </div>
+    </main>
   )
 }
