@@ -31,13 +31,20 @@ export async function POST(request: Request) {
       )
     }
     
-    const { newPassword } = body
+    const { newPassword, email, role, role_scope, full_name, recruited_by } = body
     console.log("🟢 SERVER: newPassword received:", newPassword ? "yes (length " + newPassword.length + ")" : "no")
     
     // Validate
     if (!newPassword || newPassword.length < 8) {
       return NextResponse.json(
         { error: "Password minimal 8 karakter" }, 
+        { status: 400 }
+      )
+    }
+    
+    if (!email || !role || !full_name) {
+      return NextResponse.json(
+        { error: "Email, role, dan full_name diperlukan" }, 
         { status: 400 }
       )
     }
