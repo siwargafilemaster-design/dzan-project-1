@@ -67,8 +67,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/dzan-project.git
-cd dzan-project
+git clone https://github.com/siwargafilemaster-design/dzan-project-1
+cd dzan-project-1
 
 # Install dependencies
 npm install

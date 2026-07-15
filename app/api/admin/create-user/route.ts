@@ -9,48 +9,25 @@ import {
 } from "@/lib/permissions"
 
 export async function POST(request: Request) {
-  console.log("🟢 SERVER: API called")
-  console.log("🟢 SERVER: Content-Type:", request.headers.get("content-type"))
-  
   try {
-    // ⚡ DEBUG: baca body sebagai TEXT dulu
-    const rawBody = await request.text()
-    console.log("🟢 SERVER: Raw body received:", rawBody)
-    console.log("🟢 SERVER: Body length:", rawBody.length)
-    
-    // Parse JSON manual
-    let body
-    try {
-      body = JSON.parse(rawBody)
-      console.log("🟢 SERVER: Parsed body:", body)
-    } catch (parseError) {
-      console.error("❌ SERVER: JSON parse failed:", parseError)
+    // Parse request body
+    const body = await request.json()
+    const { email, full_name, role, role_scope, recruited_by } = body
+
+    console.log("🟢 SERVER: Create user request:")
+    console.log("  email:", email)
+    console.log("  full_name:", full_name)
+    console.log("  role:", role)
+    console.log("  role_scope:", role_scope)
+
+    // Validate required fields
+    if (!email || !full_name || !role) {
       return NextResponse.json(
-        { error: "Invalid JSON body", rawBody }, 
+        { error: "Missing required fields" },
         { status: 400 }
       )
     }
-    
-    const { newPassword, email, role, role_scope, full_name, recruited_by } = body
-    console.log("🟢 SERVER: newPassword received:", newPassword ? "yes (length " + newPassword.length + ")" : "no")
-    
-    // Validate
-    if (!newPassword || newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "Password minimal 8 karakter" }, 
-        { status: 400 }
-      )
-    }
-    
-    if (!email || !role || !full_name) {
-      return NextResponse.json(
-        { error: "Email, role, dan full_name diperlukan" }, 
-        { status: 400 }
-      )
-    }
-    
-    // ... REST OF EXISTING CODE (get user, adminClient, etc)
-    
+
     // Get viewer profile
     const serverSupabase = await createServerClient()
     const { data: { user: viewer } } = await serverSupabase.auth.getUser()
@@ -107,24 +84,18 @@ export async function POST(request: Request) {
       }
     )
     
-    // ============================================================
-    // CHECK IF EMAIL ALREADY EXISTS
-    // ============================================================
-    
+    // Check if user exists
     const { data: existingProfile } = await adminClient
       .from("profiles")
       .select("id, role, role_scope, email, full_name")
       .eq("email", email)
       .maybeSingle()
     
+    // Password generated SERVER-SIDE, bukan dari body
     const tempPassword = getDefaultPassword()
     
-    // ============================================================
-    // PATH A: USER EXISTS → UPGRADE
-    // ============================================================
-    
+    // PATH A: User exists → Upgrade
     if (existingProfile) {
-      // Block upgrade kalau target sudah admin/super_admin (avoid duplicate logic)
       if (existingProfile.role === "super_admin") {
         return NextResponse.json(
           { error: "Cannot modify super_admin user" },
@@ -132,19 +103,22 @@ export async function POST(request: Request) {
         )
       }
       
-      if (existingProfile.role === role && 
-        existingProfile.role_scope === role_scope&& role !== "buyer") {
+      if (
+        existingProfile.role === role && 
+        existingProfile.role_scope === role_scope && 
+        role !== "buyer"
+      ) {
         return NextResponse.json(
           { error: `User sudah memiliki role: ${role}/${role_scope}` },
           { status: 400 }
         )
       }
       
-      // Update profile: upgrade role
+      // Update profile
       const { error: updateError } = await adminClient
         .from("profiles")
         .update({
-          full_name, // Update name kalau ada perubahan
+          full_name,
           role,
           role_scope,
           recruited_by,
@@ -160,7 +134,7 @@ export async function POST(request: Request) {
         )
       }
       
-      // Reset password user
+      // Reset password
       const { error: passwordError } = await adminClient.auth.admin.updateUserById(
         existingProfile.id,
         { password: tempPassword }
@@ -182,7 +156,6 @@ export async function POST(request: Request) {
         description: `Upgraded ${existingProfile.full_name || email} from ${existingProfile.role} to ${role}/${role_scope || "none"}`,
       })
       
-      // Return success dengan flag upgraded
       return NextResponse.json({
         success: true,
         upgraded: true,
@@ -193,11 +166,7 @@ export async function POST(request: Request) {
       })
     }
     
-    // ============================================================
-    // PATH B: USER BARU → CREATE
-    // ============================================================
-    
-    // Create auth user
+    // PATH B: New user → Create
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password: tempPassword,
@@ -211,7 +180,7 @@ export async function POST(request: Request) {
       )
     }
     
-    // Create profile entry
+    // Create profile
     const { error: profileError } = await adminClient
       .from("profiles")
       .upsert({
