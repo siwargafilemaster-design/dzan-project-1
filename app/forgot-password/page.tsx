@@ -19,13 +19,18 @@ export default function ForgotPasswordPage() {
 
     const supabase = createClient()
 
-    let baseUrl = window.location.origin
-    if (baseUrl.includes('.app.github.dev:3000')) {
-      baseUrl = baseUrl.replace (':3000', '')
-    }
+    // Debug: check what getBaseUrl returns
+    const baseUrl = getBaseUrl()
+    const redirectUrl = `${baseUrl}/auth/confirm`
+    
+    console.log("🔵 window.location.origin:", window.location.origin)
+    console.log("🔵 NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL)
+    console.log("🔵 NEXT_PUBLIC_VERCEL_URL:", process.env.NEXT_PUBLIC_VERCEL_URL)
+    console.log("🔵 getBaseUrl() returns:", baseUrl)
+    console.log("🔵 Final redirectUrl:", redirectUrl)
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${getBaseUrl()}/auth/confirm`,
+      redirectTo: redirectUrl,
     })
 
     if (error) {
