@@ -9,6 +9,7 @@ import {
   buildWhatsAppUrl 
 } from "@/lib/settings"
 import InquireButton from "./InquireButton"
+import ProductGallery from "./ProductGallery"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -27,6 +28,30 @@ const ProductDetailPage = async ({ params }: Props) => {
 
   if (error || !product) {
     notFound()
+  }
+
+  // Fetch product photos (additional gallery)
+  const { data: additionalPhotos } = await supabase
+    .from("product_photos")
+    .select("id, photo_url, sort_order")
+    .eq("product_id", product.id)
+    .order("sort_order", { ascending: true })
+
+  // Combine main image + additional photos
+  const allPhotos: Array<{ id: number; photo_url: string; sort_order: number }> = []
+  
+  // Add main image first (kalau ada)
+  if (product.image_url) {
+    allPhotos.push({
+      id: 0, // ID unik untuk main image
+      photo_url: product.image_url,
+      sort_order: -1, // Selalu paling pertama
+    })
+  }
+  
+  // Add additional photos
+  if (additionalPhotos && additionalPhotos.length > 0) {
+    allPhotos.push(...additionalPhotos)
   }
 
   // Fetch WhatsApp settings for backup direct link
@@ -54,21 +79,20 @@ const ProductDetailPage = async ({ params }: Props) => {
         </Link>
       </div>
 
-      {/* Product Image */}
-      <section className="px-6 py-8">
-        <div className="aspect-square rounded-sm overflow-hidden bg-dzan-warm/30">
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.name_en}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-dzan-stone italic text-sm">
-              No image
+      {/* Product Gallery */}
+      <section className="py-8">
+        {allPhotos.length > 0 ? (
+          <ProductGallery 
+            photos={allPhotos}
+            productName={product.name_en}
+          />
+        ) : (
+          <div className="px-6">
+            <div className="aspect-square rounded-sm bg-dzan-warm/30 flex items-center justify-center text-dzan-stone italic text-sm">
+              No image available
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Product Info */}
