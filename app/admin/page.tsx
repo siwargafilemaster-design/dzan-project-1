@@ -34,7 +34,7 @@ const getActions = (role: string, scope: string | null) => {
     ...a,
     enabled:
       role === "super_admin" ||
-      (role === "admin" || role === "freelancer" && a.scopes.includes(scope || "")),
+      ((role === "admin" || role === "freelancer") && a.scopes.includes(scope || "")),
   }))
 }
 
