@@ -79,6 +79,12 @@ const EditProductForm = ({ product, artisans }: EditProductFormProps) => {
     }
   }, [nameEn])
 
+  // 🆕 FORCE REFRESH data saat mount
+  // Prevent stale cache setelah kembali dari /photos page
+  useEffect(() => {
+    router.refresh()
+    }, [])
+
   // Handler image file change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
