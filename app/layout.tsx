@@ -4,6 +4,9 @@ import "./globals.css"
 import Navbar from "@/components/Navbar"
 import BottomNav from "@/components/BottomNav"
 import { AuthProvider } from "@/components/AuthProvider"
+import { ChatbotProvider } from "@/components/chatbot/ChatbotProvider"
+import FloatingChatButton from "@/components/chatbot/FloatingChatButton"
+import ChatWindow from "@/components/chatbot/ChatWindow"
 import { createClient } from "@/lib/supabase-server"
 
 const cormorant = Cormorant_Garamond({
@@ -51,9 +54,15 @@ export default async function RootLayout({
       <body className="font-jost bg-dzan-dark text-dzan-cream pb-20">
         {/* Bungkus semua dengan AuthProvider, pass data dari server */}
         <AuthProvider initialUser={user} initialProfile={profile}>
-          <Navbar />
-          {children}
-          <BottomNav />
+          <ChatbotProvider>
+            <Navbar />
+            {children}
+            <BottomNav />
+            
+            {/* DZAN AI Assistant */}
+            <FloatingChatButton />
+            <ChatWindow />
+          </ChatbotProvider>
         </AuthProvider>
       </body>
     </html>
