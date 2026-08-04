@@ -16,14 +16,14 @@ const FloatingChatButton = () => {
     >
       {/* Ikon logo — di-clip bulat oleh wrapper ini, BUKAN oleh <button>,
           supaya label/tooltip di kiri tidak ikut terpotong */}
-      <span className="block h-full w-full overflow-hidden rounded-full ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
+      <span className="block h-full w-full bg-dzan-cream overflow-hidden rounded-full ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
         <Image
           src="/dzan-assistant-icon.png"
           alt="DZAN Assistant"
           width={64}
           height={64}
           priority
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
         />
       </span>
 

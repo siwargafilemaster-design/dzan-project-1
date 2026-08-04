@@ -51,7 +51,7 @@ const ChatWindow = () => {
               alt="DZAN Assistant"
               width={32}
               height={32}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-dzan-cream"
             />
           </div>
           <div>
