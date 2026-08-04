@@ -1,34 +1,35 @@
 "use client"
 
+import Image from "next/image"
 import { useChatbot } from "./ChatbotProvider"
 
 const FloatingChatButton = () => {
   const { isOpen, openChat } = useChatbot()
-  
+
   if (isOpen) return null
 
   return (
     <button
       onClick={openChat}
-      className="fixed bottom-24 right-6 z-60 bg-dzan-earth hover:bg-dzan-brown text-dzan-cream w-20 h-20 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center group"
-      aria-label="Open DZAN Assistant"
+      className="group fixed bottom-24 right-6 z-60 h-20 w-20 rounded-full shadow-lg transition-all hover:shadow-xl"
+      aria-label="Tanya DZAN Assistant"
     >
-      <svg 
-        className="w-14 h-14" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          strokeWidth="1.5" 
-          d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" 
+      {/* Ikon logo — di-clip bulat oleh wrapper ini, BUKAN oleh <button>,
+          supaya label/tooltip di kiri tidak ikut terpotong */}
+      <span className="block h-full w-full overflow-hidden rounded-full ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
+        <Image
+          src="/dzan-assistant-icon.jpg"
+          alt="DZAN Assistant"
+          width={80}
+          height={80}
+          priority
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-      </svg>
-      
-      <span className="absolute right-full mr-3 bg-dzan-earth text-dzan-cream text-xs tracking-[1.5px] uppercase px-3 py-1.5 rounded-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        DZAN Assistant
+      </span>
+
+      {/* Label muncul saat hover */}
+      <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-sm bg-dzan-earth px-3 py-1.5 text-xs uppercase tracking-[1.5px] text-dzan-cream opacity-0 transition-opacity group-hover:opacity-100">
+        Tanya DZAN Assistant!
       </span>
     </button>
   )

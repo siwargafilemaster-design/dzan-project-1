@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Image from "next/image"
 import { useChatbot } from "./ChatbotProvider"
 import MessageBubble from "./MessageBubble"
 import TypingIndicator from "./TypingIndicator"
@@ -25,7 +26,7 @@ const ChatWindow = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading) return
-    
+
     const message = input.trim()
     setInput("")
     await sendMessage(message)
@@ -40,12 +41,18 @@ const ChatWindow = () => {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-3rem)] max-w-md h-[600px] max-h-[calc(100vh-6rem)] bg-dzan-cream rounded-sm shadow-2xl flex flex-col border border-dzan-brown/20 overflow-hidden">
-      
+
       {/* Header */}
       <div className="bg-dzan-earth text-dzan-cream px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-dzan-amber flex items-center justify-center text-lg">
-            🤠
+          <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-dzan-cream/30 flex-shrink-0">
+            <Image
+              src="/dzan-assistant-icon.jpg"
+              alt="DZAN Assistant"
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
             <p className="text-sm font-medium">DZAN Assistant</p>
@@ -54,7 +61,7 @@ const ChatWindow = () => {
             </p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
           {messages.length > 1 && (
             <button
@@ -82,18 +89,18 @@ const ChatWindow = () => {
         {messages.map(message => (
           <MessageBubble key={message.id} message={message} />
         ))}
-        
+
         {isLoading && <TypingIndicator />}
-        
+
         {messages.length === 1 && !isLoading && (
           <QuickActions onAction={handleQuickAction} />
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <form 
+      <form
         onSubmit={handleSubmit}
         className="border-t border-dzan-brown/20 bg-white p-3 flex gap-2"
       >
@@ -116,7 +123,7 @@ const ChatWindow = () => {
           </svg>
         </button>
       </form>
-      
+
       {/* Footer */}
       <div className="bg-dzan-warm/30 px-4 py-2 border-t border-dzan-brown/10">
         <p className="text-[10px] text-dzan-stone italic text-center">
