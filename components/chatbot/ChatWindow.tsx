@@ -49,9 +49,9 @@ const ChatWindow = () => {
             <Image
               src="/dzan-assistant-icon.jpg"
               alt="DZAN Assistant"
-              width={40}
-              height={40}
-              className="w-full h-full object-cover"
+              width={32}
+              height={32}
+              className="w-full h-full object-contain"
             />
           </div>
           <div>
