@@ -47,7 +47,7 @@ const ChatWindow = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-dzan-cream/30 flex-shrink-0">
             <Image
-              src="/dzan-assistant-icon.jpg"
+              src="/dzan-assistant-icon.png"
               alt="DZAN Assistant"
               width={32}
               height={32}

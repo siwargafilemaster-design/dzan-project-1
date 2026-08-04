@@ -18,10 +18,10 @@ const FloatingChatButton = () => {
           supaya label/tooltip di kiri tidak ikut terpotong */}
       <span className="block h-full w-full overflow-hidden rounded-full ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
         <Image
-          src="/dzan-assistant-icon.jpg"
+          src="/dzan-assistant-icon.png"
           alt="DZAN Assistant"
-          width={80}
-          height={80}
+          width={64}
+          height={64}
           priority
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
