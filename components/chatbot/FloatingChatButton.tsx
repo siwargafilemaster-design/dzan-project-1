@@ -14,14 +14,14 @@ const FloatingChatButton = () => {
       className="group fixed bottom-24 right-6 z-60 h-20 w-20 rounded-full shadow-lg transition-all hover:shadow-xl"
       aria-label="Tanya DZAN Assistant"
     >
-      {/* Ikon logo — di-clip bulat oleh wrapper ini, BUKAN oleh <button>,
-          supaya label/tooltip di kiri tidak ikut terpotong */}
-      <span className="block h-full w-full bg-dzan-cream overflow-hidden rounded-full ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
+      {/* bg-dzan-cream WAJIB karena icon-nya transparan; p-3.5 kasih ruang
+          biar bubble/dot di kanan tidak kepotong garis lingkaran */}
+      <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-dzan-cream p-3.5 ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
         <Image
           src="/dzan-assistant-icon.png"
           alt="DZAN Assistant"
-          width={64}
-          height={64}
+          width={80}
+          height={80}
           priority
           className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
         />

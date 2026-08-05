@@ -45,13 +45,13 @@ const ChatWindow = () => {
       {/* Header */}
       <div className="bg-dzan-earth text-dzan-cream px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-dzan-cream/30 flex-shrink-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-dzan-cream/30 bg-dzan-cream flex items-center justify-center flex-shrink-0">
             <Image
               src="/dzan-assistant-icon.png"
               alt="DZAN Assistant"
-              width={32}
-              height={32}
-              className="w-full h-full object-contain bg-dzan-cream"
+              width={40}
+              height={40}
+              className="w-7 h-7 object-contain"
             />
           </div>
           <div>
