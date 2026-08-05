@@ -18,7 +18,7 @@ const FloatingChatButton = () => {
           biar bubble/dot di kanan tidak kepotong garis lingkaran */}
       <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-dzan-cream p-3.5 ring-2 ring-dzan-earth/15 transition-all group-hover:ring-dzan-earth/40">
         <Image
-          src="/dzan-assistant-icon.png"
+          src="/dzan-asst-icon.png"
           alt="DZAN Assistant"
           width={80}
           height={80}
